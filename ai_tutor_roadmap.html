@@ -1,0 +1,1162 @@
+
+<h2 class="sr-only">AI Tutor Web App — Complete Beginner Step-by-Step Roadmap</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.wrap{padding:1rem 0}
+.phase-nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.5rem}
+.pnav{padding:6px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:13px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s}
+.pnav.active{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary);font-weight:500}
+.pnav:hover:not(.active){background:var(--color-background-secondary)}
+.phase{display:none}
+.phase.active{display:block}
+.phase-header{margin-bottom:1.25rem}
+.phase-badge{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:var(--border-radius-md);margin-bottom:8px}
+.p1 .phase-badge{background:#E6F1FB;color:#0C447C}
+.p2 .phase-badge{background:#EAF3DE;color:#27500A}
+.p3 .phase-badge{background:#FAEEDA;color:#633806}
+.p4 .phase-badge{background:#FBEAF0;color:#72243E}
+.p5 .phase-badge{background:#EEEDFE;color:#3C3489}
+.p6 .phase-badge{background:#E1F5EE;color:#085041}
+.phase-title{font-size:18px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.phase-sub{font-size:13px;color:var(--color-text-secondary);margin-bottom:6px}
+.phase-weeks{font-size:12px;color:var(--color-text-tertiary)}
+.progress-bar{height:4px;border-radius:2px;background:var(--color-border-tertiary);margin:1rem 0;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;transition:width .3s;background:#378ADD}
+.p2 .progress-fill{background:#639922}
+.p3 .progress-fill{background:#BA7517}
+.p4 .progress-fill{background:#D4537E}
+.p5 .progress-fill{background:#7F77DD}
+.p6 .progress-fill{background:#1D9E75}
+.section{margin-bottom:1.5rem}
+.section-title{font-size:14px;font-weight:500;color:var(--color-text-secondary);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--color-border-tertiary);letter-spacing:.01em}
+.step{display:flex;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary);align-items:flex-start;cursor:pointer;transition:background .1s}
+.step:last-child{border-bottom:none}
+.step:hover{background:var(--color-background-secondary);margin:0 -8px;padding:10px 8px;border-radius:var(--border-radius-md)}
+.cb{width:18px;height:18px;border-radius:4px;border:0.5px solid var(--color-border-secondary);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cb.done{background:#378ADD;border-color:#378ADD}
+.p2 .cb.done{background:#639922;border-color:#639922}
+.p3 .cb.done{background:#BA7517;border-color:#BA7517}
+.p4 .cb.done{background:#D4537E;border-color:#D4537E}
+.p5 .cb.done{background:#7F77DD;border-color:#7F77DD}
+.p6 .cb.done{background:#1D9E75;border-color:#1D9E75}
+.cb.done::after{content:'';display:block;width:4px;height:7px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px)}
+.step-body{flex:1;min-width:0}
+.step-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:3px;line-height:1.4}
+.step-title.done-text{color:var(--color-text-tertiary);text-decoration:line-through}
+.step-desc{font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+.step-code{margin-top:8px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;font-family:var(--font-mono);font-size:11px;color:var(--color-text-primary);white-space:pre-wrap;border:0.5px solid var(--color-border-tertiary);line-height:1.6}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;margin-right:5px;margin-top:4px;font-weight:500}
+.tag-cmd{background:#E6F1FB;color:#0C447C}
+.tag-file{background:#EAF3DE;color:#27500A}
+.tag-warn{background:#FAEEDA;color:#633806}
+.tag-key{background:#EEEDFE;color:#3C3489}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;text-align:center}
+.stat-n{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.stat-l{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.nav-btns{display:flex;justify-content:space-between;margin-top:1.25rem;gap:8px}
+.nav-btn{padding:8px 18px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:13px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-primary)}
+.nav-btn:hover{background:var(--color-background-secondary)}
+.nav-btn:disabled{opacity:.35;cursor:not-allowed}
+</style>
+<div class="wrap">
+<div class="phase-nav" id="pnav"></div>
+<div id="phases"></div>
+</div>
+<script>
+const phases=[
+{id:'p1',label:'Phase 1',title:'Foundation & Project Setup',sub:'Dev environment · Project structure · Database · Auth',weeks:'Weeks 1–3',sections:[
+{title:'Step 1 — Install prerequisites',steps:[
+{t:'Install Node.js 20+ (LTS)',d:'Download from nodejs.org. Required for Next.js frontend. Verify with node --version and npm --version.',code:'node --version   # should show v20+\nnpm --version    # should show 10+',tags:['cmd']},
+{t:'Install Python 3.11+',d:'Download from python.org. Required for FastAPI backend. Also install pip.',code:'python --version    # should show 3.11+\npip --version',tags:['cmd']},
+{t:'Install Docker Desktop',d:'Download from docker.com. You will run PostgreSQL and Redis inside Docker — no manual DB installs needed.',code:'docker --version\ndocker-compose --version',tags:['cmd']},
+{t:'Install Git',d:'Download from git-scm.com. Create a GitHub account if you do not have one. Initialize a new private repository named ai-tutor.',code:'git --version\ngit config --global user.name "Your Name"\ngit config --global user.email "you@email.com"',tags:['cmd']},
+{t:'Install VS Code',d:'Download from code.visualstudio.com. Install extensions: Python, Pylance, ESLint, Prettier, Tailwind CSS IntelliSense, and Docker.'}
+]},
+{title:'Step 2 — Create account on Supabase',steps:[
+{t:'Sign up at supabase.com',d:'Create a new project. Name it ai-tutor. Choose a strong DB password (save it). Choose region closest to you (e.g. Mumbai).'},
+{t:'Get your Supabase credentials',d:'Go to Project Settings → API. Copy: Project URL, anon public key, and service_role secret key. You will need all three.',tags:['key']},
+{t:'Enable email auth in Supabase',d:'Go to Authentication → Providers → Email. Enable "Confirm email". This is the login system for your app.'}
+]},
+{title:'Step 3 — Create the folder structure',steps:[
+{t:'Create the monorepo root',d:'Create a folder called ai-tutor anywhere on your computer. Open it in VS Code.',code:'mkdir ai-tutor && cd ai-tutor\nmkdir -p apps/web apps/api packages/ai-engine infra\ntouch docker-compose.yml .env.example .gitignore',tags:['cmd','file']},
+{t:'Create Next.js frontend',d:'Run inside the ai-tutor folder. Choose TypeScript, Tailwind, App Router when prompted.',code:'cd apps\nnpx create-next-app@latest web --typescript --tailwind --app\ncd ..',tags:['cmd']},
+{t:'Create FastAPI backend',d:'Inside apps/api, create the folder structure manually.',code:'mkdir -p apps/api/app/{api,core,models,schemas,services,tasks}\nmkdir apps/api/alembic\ntouch apps/api/main.py apps/api/requirements.txt apps/api/Dockerfile',tags:['cmd','file']},
+{t:'Create .gitignore',d:'Add these to .gitignore at the root so secrets are never committed.',code:'node_modules/\n__pycache__/\n.env\n*.pyc\n.next/\nvenv/',tags:['file']},
+]},
+{title:'Step 4 — Set up Docker (DB + Redis)',steps:[
+{t:'Write docker-compose.yml',d:'This file starts PostgreSQL and Redis with one command. Put this in your root ai-tutor folder.',code:`version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: aitutor
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yourpassword
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+volumes:
+  pgdata:`,tags:['file']},
+{t:'Start Docker services',d:'Run this from the root ai-tutor folder. Leave this terminal running.',code:'docker-compose up -d\n# Verify running:\ndocker-compose ps',tags:['cmd']},
+]},
+{title:'Step 5 — Set up the backend (FastAPI)',steps:[
+{t:'Write requirements.txt',d:'Add all Python packages needed for the entire project now.',code:`fastapi==0.111.0
+uvicorn[standard]==0.30.0
+sqlalchemy==2.0.30
+alembic==1.13.1
+pydantic==2.7.1
+pydantic-settings==2.2.1
+supabase==2.4.3
+python-jose[cryptography]==3.3.0
+python-multipart==0.0.9
+celery[redis]==5.4.0
+redis==5.0.4
+httpx==0.27.0
+openai==1.30.1
+langchain==0.2.1
+langchain-openai==0.1.8
+langchain-pinecone==0.1.1
+pinecone-client==4.0.0
+pymupdf==1.24.4
+pytesseract==0.3.10
+pillow==10.3.0
+sentence-transformers==3.0.1
+weasyprint==62.3
+jinja2==3.1.4
+sendgrid==6.11.0`,tags:['file']},
+{t:'Create Python virtual environment',d:'Always use a virtual environment so packages are isolated to this project.',code:'cd apps/api\npython -m venv venv\n# Mac/Linux:\nsource venv/bin/activate\n# Windows:\nvenv\\Scripts\\activate\npip install -r requirements.txt',tags:['cmd']},
+{t:'Write main.py',d:'This is the FastAPI entry point. Put it at apps/api/main.py.',code:`from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="AI Tutor API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}`,tags:['file']},
+{t:'Run and test the backend',d:'Open a new terminal, activate venv, and start the server. Then visit http://localhost:8000/docs — you should see the Swagger UI.',code:'cd apps/api\nsource venv/bin/activate\nuvicorn main:app --reload --port 8000',tags:['cmd']},
+]},
+{title:'Step 6 — Set up the database schema',steps:[
+{t:'Configure Alembic for migrations',d:'Alembic tracks database changes so you can evolve the schema safely.',code:'cd apps/api\nalembic init alembic',tags:['cmd']},
+{t:'Run the full schema SQL in Supabase',d:'Go to your Supabase dashboard → SQL Editor. Paste and run the SQL from the roadmap: all 6 tables (users, student_profiles, textbooks, sessions, behavior_incidents, test_results) plus the RLS policy.',tags:['warn']},
+{t:'Verify tables in Supabase',d:'Go to Table Editor in Supabase dashboard. You should see all 6 tables. Click on sessions table and confirm the RLS policy is enabled.'},
+]},
+{title:'Step 7 — Set up the .env file',steps:[
+{t:'Create .env in apps/api',d:'Never commit this file. Add every credential here.',code:`SUPABASE_URL=https://yourproject.supabase.co
+SUPABASE_SERVICE_KEY=your-service-role-key
+SUPABASE_ANON_KEY=your-anon-key
+DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/aitutor
+REDIS_URL=redis://localhost:6379
+OPENAI_API_KEY=sk-...
+PINECONE_API_KEY=pc-...
+ELEVENLABS_API_KEY=...
+SENDGRID_API_KEY=SG...`,tags:['file','key']},
+{t:'Create .env.local in apps/web',d:'Frontend env file for Next.js. NEXT_PUBLIC_ prefix makes variables available in the browser.',code:`NEXT_PUBLIC_SUPABASE_URL=https://yourproject.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_API_URL=http://localhost:8000`,tags:['file','key']},
+]},
+{title:'Step 8 — Implement auth in frontend',steps:[
+{t:'Install Supabase client in Next.js',d:'',code:'cd apps/web\nnpm install @supabase/supabase-js @supabase/ssr\nnpm install',tags:['cmd']},
+{t:'Create Supabase client utility',d:'Create file apps/web/lib/supabase.ts',code:`import { createBrowserClient } from '@supabase/ssr'
+
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}`,tags:['file']},
+{t:'Create login page at app/(auth)/login/page.tsx',d:'Build a simple email + password form that calls supabase.auth.signInWithPassword(). On success, redirect to /dashboard.',tags:['file']},
+{t:'Create register page at app/(auth)/register/page.tsx',d:'Form with name, email, password. Call supabase.auth.signUp(). Show "Check your email" message after.',tags:['file']},
+{t:'Test the full auth flow',d:'Start frontend (npm run dev), register a new account, check Supabase Auth dashboard to see the user, then log in.',code:'cd apps/web && npm run dev',tags:['cmd']},
+]},
+{title:'Phase 1 checklist — verify before moving on',steps:[
+{t:'Docker: postgres and redis running (docker-compose ps shows Up)',tags:['warn']},
+{t:'FastAPI: http://localhost:8000/health returns {"status":"ok"}',tags:['warn']},
+{t:'Supabase: all 6 tables visible in Table Editor',tags:['warn']},
+{t:'Auth: can register, receive email, and log in',tags:['warn']},
+{t:'.env files created and .gitignore includes .env',tags:['warn']},
+]}
+]},
+
+{id:'p2',label:'Phase 2',title:'Textbook Upload & RAG Pipeline',sub:'PDF ingestion · OCR · Embeddings · Pinecone · Search',weeks:'Weeks 4–6',sections:[
+{title:'Step 1 — Set up Pinecone',steps:[
+{t:'Create account at pinecone.io',d:'Sign up for free. Create a new index named aitutor. Choose dimension 1536, metric cosine, and region us-east-1 (AWS). Copy your API key.',tags:['key']},
+{t:'Write Pinecone setup code',d:'Create apps/api/app/core/vector_store.py',code:`from pinecone import Pinecone, ServerlessSpec
+from langchain_pinecone import PineconeVectorStore
+from langchain_openai import OpenAIEmbeddings
+import os
+
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+
+if 'aitutor' not in [i.name for i in pc.list_indexes()]:
+    pc.create_index('aitutor', dimension=1536,
+        spec=ServerlessSpec(cloud='aws', region='us-east-1'))
+
+def get_vectorstore(student_id: str, subject: str):
+    embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
+    return PineconeVectorStore(
+        index_name='aitutor',
+        embedding=embeddings,
+        namespace=f'{student_id}_{subject}'
+    )`,tags:['file']},
+]},
+{title:'Step 2 — PDF text extraction with OCR fallback',steps:[
+{t:'Install Tesseract OCR on your system',d:'This is required for scanned textbooks (many Indian state board books are scanned images).',code:'# Mac:\nbrew install tesseract\n# Ubuntu/Debian:\nsudo apt install tesseract-ocr\n# Windows: download installer from github.com/UB-Mannheim/tesseract',tags:['cmd','warn']},
+{t:'Write PDF extraction service',d:'Create apps/api/app/services/pdf_service.py',code:`import fitz, pytesseract, re, io
+from PIL import Image
+
+def extract_text_smart(pdf_path: str) -> list[dict]:
+    doc = fitz.open(pdf_path)
+    pages = []
+    for i, page in enumerate(doc):
+        text = page.get_text('text').strip()
+        if len(text) < 50:  # likely a scanned page
+            pix = page.get_pixmap(dpi=300)
+            img = Image.open(io.BytesIO(pix.tobytes('png')))
+            text = pytesseract.image_to_string(img, lang='eng+hin')
+        pages.append({'text': text, 'page': i+1})
+    return pages
+
+def detect_chapter(text: str) -> str | None:
+    match = re.search(r'^([A-Z][A-Z\\s]{4,50})$', text, re.MULTILINE)
+    return match.group(1).strip() if match else None
+
+def chunk_pages(pages: list[dict], chunk_size=800, overlap=100) -> list[dict]:
+    chunks = []
+    current, current_meta = "", {}
+    for page in pages:
+        chapter = detect_chapter(page['text'])
+        words = page['text'].split()
+        for i in range(0, len(words), chunk_size - overlap):
+            chunk_words = words[i:i+chunk_size]
+            chunks.append({
+                'text': ' '.join(chunk_words),
+                'page': page['page'],
+                'chapter': chapter or current_meta.get('chapter', 'Unknown')
+            })
+    return chunks`,tags:['file']},
+]},
+{title:'Step 3 — Set up Celery for background tasks',steps:[
+{t:'Write Celery configuration',d:'Create apps/api/app/core/celery_app.py',code:`from celery import Celery
+import os
+
+celery_app = Celery(
+    "aitutor",
+    broker=os.getenv("REDIS_URL", "redis://localhost:6379"),
+    backend=os.getenv("REDIS_URL", "redis://localhost:6379"),
+    include=["app.tasks.indexing_tasks"]
+)`,tags:['file']},
+{t:'Write the indexing Celery task',d:'Create apps/api/app/tasks/indexing_tasks.py — this runs in the background when a student uploads a textbook',code:`from app.core.celery_app import celery_app
+from app.services.pdf_service import extract_text_smart, chunk_pages
+from app.core.vector_store import get_vectorstore
+from langchain.schema import Document
+
+@celery_app.task
+def index_textbook(pdf_path: str, student_id: str,
+                   subject: str, textbook_id: str):
+    # 1. Extract text (with OCR fallback)
+    pages = extract_text_smart(pdf_path)
+    # 2. Chunk into 800-token pieces
+    chunks = chunk_pages(pages)
+    # 3. Convert to LangChain Documents
+    docs = [Document(
+        page_content=c['text'],
+        metadata={'page': c['page'], 'chapter': c['chapter'],
+                  'subject': subject, 'student_id': student_id}
+    ) for c in chunks]
+    # 4. Upsert to Pinecone
+    vs = get_vectorstore(student_id, subject)
+    vs.add_documents(docs)
+    # 5. Update textbooks table status to 'ready'
+    # TODO: update DB here
+    return {'chunks_indexed': len(docs)}`,tags:['file']},
+{t:'Start Celery worker',d:'Open a new terminal, activate venv, and run this.',code:'cd apps/api\nsource venv/bin/activate\ncelery -A app.core.celery_app worker --loglevel=info',tags:['cmd']},
+]},
+{title:'Step 4 — Build upload API endpoint',steps:[
+{t:'Write textbook upload route',d:'Create apps/api/app/api/textbooks.py',code:`from fastapi import APIRouter, UploadFile, File, Depends
+from app.tasks.indexing_tasks import index_textbook
+import tempfile, os
+
+router = APIRouter(prefix="/textbooks", tags=["textbooks"])
+
+@router.post("/upload")
+async def upload_textbook(
+    subject: str,
+    file: UploadFile = File(...),
+    # current_user = Depends(get_current_user)  # add auth later
+):
+    # Save to temp file
+    with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+        content = await file.read()
+        tmp.write(content)
+        tmp_path = tmp.name
+    # Fire background indexing task
+    task = index_textbook.delay(
+        pdf_path=tmp_path,
+        student_id="test-student-1",  # replace with real user id
+        subject=subject,
+        textbook_id="new-id"
+    )
+    return {"task_id": task.id, "status": "indexing"}`,tags:['file']},
+{t:'Register route in main.py',d:'Add these lines to apps/api/main.py',code:`from app.api.textbooks import router as textbooks_router
+app.include_router(textbooks_router)`,tags:['file']},
+]},
+{title:'Step 5 — Build retrieval (the RAG search)',steps:[
+{t:'Write the retrieval service',d:'Create apps/api/app/services/retrieval_service.py',code:`from app.core.vector_store import get_vectorstore
+
+def retrieve_context(question: str, student_id: str,
+                     subject: str, k: int = 5) -> str:
+    vs = get_vectorstore(student_id, subject)
+    # MMR reduces duplicate chunks in results
+    docs = vs.max_marginal_relevance_search(question, k=k, fetch_k=20)
+    return '\\n\\n---\\n\\n'.join(d.page_content for d in docs)`,tags:['file']},
+{t:'Test retrieval manually',d:'Upload a real textbook PDF via the API, wait for indexing to complete, then test retrieval.',code:`# In a Python shell (with venv active):
+from app.services.retrieval_service import retrieve_context
+ctx = retrieve_context(
+    question="What is photosynthesis?",
+    student_id="test-student-1",
+    subject="Science"
+)
+print(ctx[:500])  # Should show relevant textbook text`,tags:['cmd','warn']},
+]},
+{title:'Phase 2 checklist — verify before moving on',steps:[
+{t:'A real PDF upload returns task_id and status:indexing',tags:['warn']},
+{t:'Celery worker logs show indexing completing without errors',tags:['warn']},
+{t:'Pinecone dashboard shows vectors in the namespace',tags:['warn']},
+{t:'retrieve_context() returns relevant text for a test question',tags:['warn']},
+{t:'Scanned PDF test: upload a scanned book and confirm chunks are not empty',tags:['warn']},
+]}
+]},
+
+{id:'p3',label:'Phase 3',title:'AI Teaching Engine & Voice',sub:'State machine · GPT-4o · Whisper · ElevenLabs · WebSocket',weeks:'Weeks 7–10',sections:[
+{title:'Step 1 — Build the teaching state machine',steps:[
+{t:'Create the state machine service',d:'Create apps/api/app/services/teaching_engine.py — this is the core of the product',code:`from enum import Enum
+
+class TeachingState(str, Enum):
+    GREET = "GREET"
+    EXPLAIN = "EXPLAIN"
+    QUESTION = "QUESTION"
+    WAIT = "WAIT"
+    EVALUATE = "EVALUATE"
+    PRAISE = "PRAISE"
+    SIMPLIFY = "SIMPLIFY"
+    RETEACH = "RETEACH"
+    DOUBT = "DOUBT"
+    SUMMARY = "SUMMARY"
+
+class SessionContext:
+    def __init__(self, student_id, student_name, subject, grade):
+        self.student_id = student_id
+        self.student_name = student_name
+        self.subject = subject
+        self.grade = grade
+        self.state = TeachingState.GREET
+        self.history = []
+        self.topic = ""
+        self.wrong_streak = 0
+        self.turn_count = 0
+        self.elo = 1000
+
+    def next_state(self, evaluation: str):
+        if evaluation == "CORRECT":
+            self.wrong_streak = 0
+            self.state = TeachingState.PRAISE
+        elif evaluation == "PARTIAL":
+            self.state = TeachingState.SIMPLIFY
+        elif evaluation == "WRONG":
+            self.wrong_streak += 1
+            if self.wrong_streak >= 2:
+                self.state = TeachingState.RETEACH
+        elif evaluation == "DOUBT":
+            self.state = TeachingState.DOUBT`,tags:['file']},
+]},
+{title:'Step 2 — Write the system prompt and GPT-4o call',steps:[
+{t:'Write the teacher prompt and LLM service',d:'Create apps/api/app/services/llm_service.py',code:`from openai import AsyncOpenAI
+import os
+
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+TEACHER_PROMPT = """You are {student_name}'s personal AI teacher for {subject}, Grade {grade}.
+
+RULES (never break):
+1. Answer ONLY from the TEXTBOOK CONTEXT below. If not in context, say "Let me check our textbook".
+2. Never give full answers before student tries. Guide with hints.
+3. After every 2-3 sentences, STOP and ask ONE question.
+4. If student writes in Hindi, respond in Hindi. Keep technical terms in English.
+5. Keep each response under 100 words.
+
+State: {state} | Topic: {topic} | Wrong streak: {wrong_streak}
+
+TEXTBOOK CONTEXT:
+{context}
+
+CONVERSATION HISTORY:
+{history}
+
+Student said: '{student_input}'
+Respond as the teacher:"""
+
+async def get_teacher_response(ctx, student_input: str,
+                                context: str) -> str:
+    history_str = "\\n".join(
+        f"{m['role']}: {m['content']}" for m in ctx.history[-10:]
+    )
+    prompt = TEACHER_PROMPT.format(
+        student_name=ctx.student_name,
+        subject=ctx.subject,
+        grade=ctx.grade,
+        state=ctx.state.value,
+        topic=ctx.topic,
+        wrong_streak=ctx.wrong_streak,
+        context=context,
+        history=history_str,
+        student_input=student_input
+    )
+    response = await client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=200,
+        stream=True
+    )
+    full = ""
+    async for chunk in response:
+        if chunk.choices[0].delta.content:
+            full += chunk.choices[0].delta.content
+            yield chunk.choices[0].delta.content`,tags:['file']},
+]},
+{title:'Step 3 — WebSocket session endpoint',steps:[
+{t:'Write WebSocket handler',d:'Create apps/api/app/api/sessions.py',code:`from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from app.services.teaching_engine import SessionContext, TeachingState
+from app.services.llm_service import get_teacher_response
+from app.services.retrieval_service import retrieve_context
+import json, redis.asyncio as aioredis
+
+router = APIRouter()
+redis_client = aioredis.from_url("redis://localhost:6379")
+
+@router.websocket("/ws/session/{session_id}")
+async def session_ws(websocket: WebSocket, session_id: str):
+    await websocket.accept()
+    # Load or create session context from Redis
+    ctx = SessionContext("student-1", "Arjun", "Science", 10)
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            msg = json.loads(data)
+
+            if msg["type"] == "student_text":
+                student_input = msg["text"]
+                # Get relevant textbook chunks
+                context = retrieve_context(
+                    student_input, ctx.student_id, ctx.subject)
+                # Stream tokens back to frontend
+                async for token in get_teacher_response(
+                        ctx, student_input, context):
+                    await websocket.send_json(
+                        {"type": "chunk", "text": token})
+                await websocket.send_json({"type": "turn_end"})
+                ctx.turn_count += 1
+    except WebSocketDisconnect:
+        pass  # Save session to DB here`,tags:['file']},
+{t:'Register session router in main.py',d:'',code:`from app.api.sessions import router as sessions_router
+app.include_router(sessions_router)`,tags:['file']},
+]},
+{title:'Step 4 — Voice: Whisper transcription endpoint',steps:[
+{t:'Write voice transcription route',d:'Add to apps/api/app/api/voice.py',code:`from fastapi import APIRouter, UploadFile, File
+from openai import OpenAI
+import tempfile
+
+router = APIRouter(prefix="/voice")
+client = OpenAI()
+
+@router.post("/transcribe")
+async def transcribe(audio: UploadFile = File(...)):
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+        tmp.write(await audio.read())
+        tmp_path = tmp.name
+    with open(tmp_path, 'rb') as f:
+        result = client.audio.transcriptions.create(
+            model="whisper-1", file=f, language="en")
+    return {"text": result.text}`,tags:['file']},
+]},
+{title:'Step 5 — Frontend: voice capture with VAD',steps:[
+{t:'Install VAD library in Next.js',d:'',code:'cd apps/web\nnpm install @ricky0123/vad-react @ricky0123/vad-web',tags:['cmd']},
+{t:'Create voice session hook',d:'Create apps/web/lib/useVoiceSession.ts',code:`import { useMicVAD } from '@ricky0123/vad-react'
+
+export function useVoiceSession(onTranscript: (text: string) => void) {
+  const { start, stop, listening } = useMicVAD({
+    onSpeechEnd: async (audio: Float32Array) => {
+      const blob = new Blob([audio], { type: 'audio/wav' })
+      const form = new FormData()
+      form.append('audio', blob, 'speech.wav')
+      const res = await fetch('/api/voice/transcribe', {
+        method: 'POST', body: form })
+      const { text } = await res.json()
+      onTranscript(text)
+    },
+    positiveSpeechThreshold: 0.8,
+    minSpeechFrames: 3,
+  })
+  return { start, stop, listening }
+}`,tags:['file']},
+]},
+{title:'Step 6 — Frontend: session page UI',steps:[
+{t:'Create session page at app/(student)/session/page.tsx',d:'This page opens the WebSocket, shows the conversation, and has mic button.',code:`'use client'
+import { useEffect, useRef, useState } from 'react'
+import { useVoiceSession } from '@/lib/useVoiceSession'
+
+export default function SessionPage() {
+  const ws = useRef<WebSocket | null>(null)
+  const [messages, setMessages] = useState<{role:string, text:string}[]>([])
+  const [current, setCurrent] = useState('')
+
+  useEffect(() => {
+    ws.current = new WebSocket('ws://localhost:8000/ws/session/session-1')
+    ws.current.onmessage = (e) => {
+      const msg = JSON.parse(e.data)
+      if (msg.type === 'chunk') setCurrent(p => p + msg.text)
+      if (msg.type === 'turn_end') {
+        setMessages(p => [...p, {role:'ai', text:current}])
+        setCurrent('')
+      }
+    }
+  }, [])
+
+  const { start, stop, listening } = useVoiceSession((text) => {
+    ws.current?.send(JSON.stringify({type:'student_text', text}))
+    setMessages(p => [...p, {role:'student', text}])
+  })
+
+  return (
+    <div>
+      {messages.map((m, i) => (
+        <div key={i}><strong>{m.role}:</strong> {m.text}</div>
+      ))}
+      {current && <div><strong>ai:</strong> {current}</div>}
+      <button onClick={listening ? stop : start}>
+        {listening ? 'Stop' : 'Speak'}
+      </button>
+    </div>
+  )
+}`,tags:['file']},
+]},
+{title:'Phase 3 checklist — verify before moving on',steps:[
+{t:'WebSocket connects at ws://localhost:8000/ws/session/test-1',tags:['warn']},
+{t:'Sending student text returns streamed tokens from GPT-4o',tags:['warn']},
+{t:'Session page: speak → text transcribed → AI responds via WebSocket',tags:['warn']},
+{t:'AI response is grounded in textbook content (test with a factual question)',tags:['warn']},
+{t:'Wrong streak: submit 2 wrong answers → state changes to RETEACH',tags:['warn']},
+]}
+]},
+
+{id:'p4',label:'Phase 4',title:'Behavior Monitoring (Camera)',sub:'MediaPipe · Web Worker · Incident logging · Parent alerts',weeks:'Weeks 11–13',sections:[
+{title:'Step 1 — Consent and camera setup',steps:[
+{t:'Add consent gate to session page',d:'Before camera activates, show a clear banner. Store consent in the database.',code:`// In session page, before starting session:
+const [consented, setConsented] = useState(false)
+
+if (!consented) return (
+  <div>
+    <p>Camera monitoring will be active during this session.
+       Behavior is recorded for parent visibility.</p>
+    <button onClick={() => {
+      setConsented(true)
+      // TODO: POST /behavior/consent to save record in DB
+    }}>I understand, start session</button>
+  </div>
+)`,tags:['file','warn']},
+]},
+{title:'Step 2 — MediaPipe in a Web Worker',steps:[
+{t:'Install MediaPipe',d:'',code:'npm install @mediapipe/face_mesh',tags:['cmd']},
+{t:'Create Web Worker file at apps/web/workers/behaviorWorker.ts',d:'This runs off the main thread so the UI stays smooth.',code:`import { FaceMesh } from '@mediapipe/face_mesh'
+
+const NOFACE_THRESHOLD = 3  // 3 seconds at 1fps
+const GAZE_THRESHOLD = 10   // 10 seconds at 1fps
+
+let gazeCount = 0, nofaceCount = 0
+let faceMesh: FaceMesh
+
+async function init() {
+  faceMesh = new FaceMesh({locateFile: (f) =>
+    \`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/\${f}\`})
+  faceMesh.setOptions({maxNumFaces: 1, minDetectionConfidence: 0.5})
+  faceMesh.onResults(handleResults)
+}
+
+function handleResults(results: any) {
+  if (!results.multiFaceLandmarks?.length) {
+    nofaceCount++
+    if (nofaceCount >= NOFACE_THRESHOLD)
+      self.postMessage({type: 'incident', kind: 'no_face'})
+    return
+  }
+  nofaceCount = 0
+  // Simple gaze: check nose tip vs eye center horizontal offset
+  const nose = results.multiFaceLandmarks[0][1]
+  const leftEye = results.multiFaceLandmarks[0][33]
+  const score = 1 - Math.abs(nose.x - leftEye.x) * 3
+  if (score < 0.35) {
+    gazeCount++
+    if (gazeCount >= GAZE_THRESHOLD)
+      self.postMessage({type: 'incident', kind: 'gaze_away'})
+  } else {
+    gazeCount = 0
+  }
+}
+
+self.onmessage = async ({data: {frame}}) => {
+  if (!faceMesh) await init()
+  await faceMesh.send({image: frame})
+}`,tags:['file']},
+{t:'Start the worker in session page',d:'Add this to your session page component',code:`useEffect(() => {
+  const worker = new Worker('/workers/behaviorWorker.ts',
+    {type: 'module'})
+  worker.onmessage = ({data}) => {
+    if (data.type === 'incident') handleIncident(data.kind)
+  }
+  // Sample camera at 1fps
+  const video = document.getElementById('cam') as HTMLVideoElement
+  const interval = setInterval(async () => {
+    const bitmap = await createImageBitmap(video)
+    worker.postMessage({frame: bitmap}, [bitmap])
+  }, 1000)
+  return () => clearInterval(interval)
+}, [])`,tags:['file']},
+]},
+{title:'Step 3 — Incident handling with 60s cooldown',steps:[
+{t:'Write incident handler in session page',d:'Cooldown prevents spam notifications to parents.',code:`const lastIncident = useRef<Record<string, number>>({})
+
+async function handleIncident(kind: string) {
+  const now = Date.now()
+  const last = lastIncident.current[kind] || 0
+  if (now - last < 60000) return  // 60s cooldown
+  lastIncident.current[kind] = now
+
+  // Capture snapshot
+  const canvas = document.createElement('canvas')
+  canvas.width = 320; canvas.height = 240
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(video, 0, 0, 320, 240)
+  const blob = await new Promise<Blob>(r => canvas.toBlob(r!, 'image/jpeg', 0.7))
+
+  // Send to backend
+  const form = new FormData()
+  form.append('photo', blob, 'incident.jpg')
+  form.append('kind', kind)
+  form.append('session_id', sessionId)
+  await fetch('/api/behavior/incident', {method: 'POST', body: form})
+}`,tags:['file']},
+]},
+{title:'Step 4 — Backend incident route + parent notification',steps:[
+{t:'Write behavior incident endpoint',d:'Create apps/api/app/api/behavior.py',code:`from fastapi import APIRouter, UploadFile, File, Form
+from app.tasks.behavior_tasks import process_incident
+
+router = APIRouter(prefix="/behavior")
+
+@router.post("/incident")
+async def log_incident(
+    photo: UploadFile = File(...),
+    kind: str = Form(...),
+    session_id: str = Form(...)
+):
+    photo_bytes = await photo.read()
+    process_incident.delay(photo_bytes, kind, session_id)
+    return {"status": "received"}`,tags:['file']},
+{t:'Write Celery task to upload photo and notify parent',d:'Create apps/api/app/tasks/behavior_tasks.py',code:`from app.core.celery_app import celery_app
+import boto3, sendgrid, os
+
+@celery_app.task
+def process_incident(photo_bytes: bytes, kind: str, session_id: str):
+    # 1. Upload photo to Supabase Storage (or S3)
+    # TODO: upload photo_bytes and get URL
+    photo_url = "https://..."
+
+    # 2. Insert behavior_incidents row in DB
+    # TODO: insert into DB
+
+    # 3. Send email to parent via SendGrid
+    sg = sendgrid.SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+    message = sendgrid.helpers.mail.Mail(
+        from_email="alerts@yourapp.com",
+        to_emails="parent@example.com",  # get from DB
+        subject=f"Attention alert: {kind.replace('_', ' ')}",
+        plain_text_content=f"Your child's session triggered an alert: {kind}"
+    )
+    sg.send(message)`,tags:['file']},
+]},
+{title:'Phase 4 checklist — verify before moving on',steps:[
+{t:'Consent screen shown and user must click to proceed',tags:['warn']},
+{t:'Web Worker running: check Chrome DevTools → Sources → Workers',tags:['warn']},
+{t:'Cover camera for 3 seconds → incident fires (check console log)',tags:['warn']},
+{t:'Two incidents of same type within 60s → only one notification sent',tags:['warn']},
+{t:'Backend receives photo and logs the incident',tags:['warn']},
+]}
+]},
+
+{id:'p5',label:'Phase 5',title:'Mock Tests & Auto-Grading',sub:'Question generation · 3-tier grading · ELO update · Timer',weeks:'Weeks 14–16',sections:[
+{title:'Step 1 — Question generation (3 types in parallel)',steps:[
+{t:'Write question generation service',d:'Create apps/api/app/services/question_service.py — generates MCQ, short-answer, and descriptive in parallel',code:`from openai import AsyncOpenAI
+import asyncio, json, os
+
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+async def generate_mcq(context: str, chapter: str) -> list:
+    resp = await client.chat.completions.create(
+        model="gpt-4o", temperature=0.2,
+        messages=[{"role": "user", "content": f"""
+Generate 5 MCQ questions from this textbook content.
+Return ONLY a JSON array:
+[{{"question":"...","options":["A","B","C","D"],"correct":"A","explanation":"..."}}]
+Chapter: {chapter}
+Content: {context[:3000]}"""}])
+    return json.loads(resp.choices[0].message.content)
+
+async def generate_short(context: str, chapter: str) -> list:
+    resp = await client.chat.completions.create(
+        model="gpt-4o", temperature=0.3,
+        messages=[{"role": "user", "content": f"""
+Generate 3 short-answer questions (2-3 sentence answers).
+Return ONLY a JSON array:
+[{{"question":"...","model_answer":"...","key_terms":["term1","term2"],"marks":3}}]
+Chapter: {chapter}
+Content: {context[:3000]}"""}])
+    return json.loads(resp.choices[0].message.content)
+
+async def generate_descriptive(context: str, chapter: str) -> list:
+    resp = await client.chat.completions.create(
+        model="gpt-4o", temperature=0.5,
+        messages=[{"role": "user", "content": f"""
+Generate 2 descriptive questions (paragraph answers).
+Return ONLY a JSON array:
+[{{"question":"...","rubric":"Criteria 1 (3pts): ...; Criteria 2 (2pts): ...","marks":5}}]
+Chapter: {chapter}
+Content: {context[:3000]}"""}])
+    return json.loads(resp.choices[0].message.content)
+
+async def generate_test(student_id: str, subject: str, chapter: str,
+                         context: str) -> dict:
+    # Run all 3 generators in parallel
+    mcq, short, desc = await asyncio.gather(
+        generate_mcq(context, chapter),
+        generate_short(context, chapter),
+        generate_descriptive(context, chapter)
+    )
+    return {"mcq": mcq, "short_answer": short, "descriptive": desc}`,tags:['file']},
+]},
+{title:'Step 2 — 3-tier auto-grading',steps:[
+{t:'Write grading service',d:'Create apps/api/app/services/grading_service.py',code:`from sentence_transformers import SentenceTransformer, util
+from openai import OpenAI
+import json
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+client = OpenAI()
+
+def grade_exact(answer: str, correct: str) -> float:
+    return 1.0 if answer.strip().upper() == correct.strip().upper() else 0.0
+
+def grade_short(student: str, model_ans: str,
+                key_terms: list, marks: int) -> float:
+    sim = float(util.cos_sim(
+        model.encode(student), model.encode(model_ans)))
+    term_hits = sum(1 for t in key_terms if t.lower() in student.lower())
+    term_score = term_hits / max(len(key_terms), 1)
+    composite = 0.6 * sim + 0.4 * term_score
+    if composite > 0.80: return marks
+    if composite > 0.60: return marks * 0.75
+    if composite > 0.40: return marks * 0.5
+    return 0.0
+
+def grade_descriptive(student: str, rubric: str, marks: int) -> dict:
+    resp = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": f"""
+Grade this student answer. Return only JSON: {{"score": 0.0, "feedback": "..."}}
+Marks available: {marks}
+Rubric: {rubric}
+Student answer: {student}"""}])
+    return json.loads(resp.choices[0].message.content)`,tags:['file']},
+]},
+{title:'Step 3 — ELO update after test',steps:[
+{t:'Write ELO update logic',d:'Add to apps/api/app/services/elo_service.py',code:`from supabase import create_client
+import os
+
+supabase = create_client(os.getenv("SUPABASE_URL"),
+                          os.getenv("SUPABASE_SERVICE_KEY"))
+
+def get_elo(student_id: str, subject: str, chapter: str) -> int:
+    result = supabase.table("student_profiles")\\
+        .select("elo_ratings").eq("user_id", student_id).single().execute()
+    ratings = result.data.get("elo_ratings", {})
+    return ratings.get(f"{subject}.{chapter}", 1000)
+
+def update_elo_from_test(student_id: str, subject: str,
+                          chapter: str, pct_score: float) -> dict:
+    current = get_elo(student_id, subject, chapter)
+    if pct_score >= 0.70:   delta = +25
+    elif pct_score >= 0.50: delta = +5
+    elif pct_score >= 0.30: delta = -10
+    else:                   delta = -20
+    new_elo = max(100, min(2000, current + delta))
+    # Update in DB
+    existing = supabase.table("student_profiles")\\
+        .select("elo_ratings").eq("user_id", student_id).single().execute()
+    ratings = existing.data.get("elo_ratings", {})
+    ratings[f"{subject}.{chapter}"] = new_elo
+    supabase.table("student_profiles")\\
+        .update({"elo_ratings": ratings}).eq("user_id", student_id).execute()
+    return {"old": current, "new": new_elo, "delta": delta}`,tags:['file']},
+]},
+{title:'Step 4 — Test API endpoints with server-side timer',steps:[
+{t:'Write test generation and submission routes',d:'Create apps/api/app/api/tests.py',code:`from fastapi import APIRouter, HTTPException
+from datetime import datetime, timedelta
+from app.services.question_service import generate_test
+from app.services.retrieval_service import retrieve_context
+from app.services.grading_service import grade_exact, grade_short, grade_descriptive
+from app.services.elo_service import update_elo_from_test
+import redis, json
+
+router = APIRouter(prefix="/tests")
+r = redis.from_url("redis://localhost:6379")
+
+@router.post("/generate")
+async def generate(student_id: str, subject: str, chapter: str):
+    context = retrieve_context(chapter, student_id, subject)
+    questions = await generate_test(student_id, subject, chapter, context)
+    test_id = f"test:{student_id}:{chapter}"
+    # Store test + start time in Redis (60 min timer)
+    r.setex(test_id, 3600, json.dumps({
+        "questions": questions,
+        "start": datetime.utcnow().isoformat()
+    }))
+    return {"test_id": test_id, "questions": questions}
+
+@router.post("/submit/{test_id}")
+async def submit(test_id: str, answers: dict):
+    stored = r.get(test_id)
+    if not stored:
+        raise HTTPException(403, "Test expired or not found")
+    data = json.loads(stored)
+    # Grade all answers and return results
+    return {"status": "graded", "answers": answers}`,tags:['file']},
+]},
+{title:'Phase 5 checklist — verify before moving on',steps:[
+{t:'Test generation returns all 3 question types in under 10 seconds',tags:['warn']},
+{t:'Exact grading: submit correct MCQ answer → score 1.0',tags:['warn']},
+{t:'Semantic grading: submit partial short answer → score between 0.4 and 0.9',tags:['warn']},
+{t:'ELO updates in DB: check student_profiles.elo_ratings in Supabase',tags:['warn']},
+{t:'Submit test after timeout → 403 Forbidden response',tags:['warn']},
+]}
+]},
+
+{id:'p6',label:'Phase 6',title:'Dashboards, Reports & Notifications',sub:'Student dashboard · Parent portal · PDF reports · Email',weeks:'Weeks 17–22',sections:[
+{title:'Step 1 — Background metrics computation',steps:[
+{t:'Write metrics Celery task',d:'Create apps/api/app/tasks/metrics_tasks.py — runs after every session end and test submission',code:`from app.core.celery_app import celery_app
+from datetime import datetime, timedelta
+import json
+
+@celery_app.task
+def recompute_student_metrics(student_id: str):
+    # Fetch last 90 days of data from DB
+    # (replace with real DB calls)
+    sessions = []  # get_sessions(student_id)
+    tests = []     # get_tests(student_id)
+    incidents = [] # get_incidents(student_id)
+
+    metrics = {
+        "study_hours_week": 0,
+        "sessions_week": 0,
+        "subject_avg": {},
+        "weak_topics": [],
+        "strong_topics": [],
+        "behavior_score": 85,
+        "elo_by_chapter": {},
+        "updated_at": datetime.utcnow().isoformat()
+    }
+    # Store as single JSON in student_profiles or a metrics table
+    # supabase.table("student_metrics").upsert({...}).execute()
+    return metrics`,tags:['file']},
+]},
+{title:'Step 2 — Dashboard API endpoint',steps:[
+{t:'Write dashboard data route',d:'Add to apps/api/app/api/dashboard.py',code:`from fastapi import APIRouter
+router = APIRouter(prefix="/dashboard")
+
+@router.get("/student/{student_id}")
+async def get_dashboard(student_id: str):
+    # Fetch pre-computed metrics from DB (single row fetch)
+    # This should return in under 100ms
+    return {
+        "study_hours_week": 8.5,
+        "sessions_week": 6,
+        "behavior_score": 82,
+        "weak_topics": ["Photosynthesis", "Cell Division"],
+        "strong_topics": ["Periodic Table", "Newton Laws"],
+        "subject_avg": {"Science": 72, "Math": 85},
+        "elo_by_chapter": {}
+    }`,tags:['file']},
+]},
+{title:'Step 3 — Build student dashboard frontend',steps:[
+{t:'Install Recharts for charts',d:'',code:'cd apps/web && npm install recharts',tags:['cmd']},
+{t:'Create dashboard page at app/(student)/dashboard/page.tsx',d:'Fetch metrics from backend and render charts.',code:`'use client'
+import { useEffect, useState } from 'react'
+import { LineChart, Line, RadarChart, Radar, XAxis, YAxis,
+         PolarGrid, PolarAngleAxis, Tooltip, ResponsiveContainer } from 'recharts'
+
+export default function Dashboard() {
+  const [metrics, setMetrics] = useState<any>(null)
+
+  useEffect(() => {
+    fetch('/api/dashboard/student/me')
+      .then(r => r.json()).then(setMetrics)
+  }, [])
+
+  if (!metrics) return <div>Loading...</div>
+
+  return (
+    <div className="p-6 grid grid-cols-3 gap-4">
+      <div className="col-span-3 grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl p-4 border">
+          <p className="text-sm text-gray-500">Study hours this week</p>
+          <p className="text-2xl font-medium">{metrics.study_hours_week}h</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border">
+          <p className="text-sm text-gray-500">Sessions this week</p>
+          <p className="text-2xl font-medium">{metrics.sessions_week}</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 border">
+          <p className="text-sm text-gray-500">Attention score</p>
+          <p className="text-2xl font-medium">{metrics.behavior_score}/100</p>
+        </div>
+      </div>
+      <div className="col-span-2 bg-white rounded-xl p-4 border">
+        <h3 className="font-medium mb-4">Topics to review</h3>
+        {metrics.weak_topics.map((t: string) => (
+          <div key={t} className="text-sm py-1 text-orange-600">⚠ {t}</div>
+        ))}
+      </div>
+    </div>
+  )
+}`,tags:['file']},
+]},
+{title:'Step 4 — Weekly PDF report',steps:[
+{t:'Install WeasyPrint for PDF generation',d:'WeasyPrint converts HTML to PDF. Install the system dependency too.',code:'# System dependency:\nsudo apt install libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0\n# Python package (already in requirements.txt):\npip install weasyprint jinja2',tags:['cmd']},
+{t:'Create report HTML template',d:'Create apps/api/templates/weekly_report.html — a Jinja2 template for the PDF report.',code:`<!DOCTYPE html>
+<html><head>
+<style>
+  body { font-family: sans-serif; margin: 40px; color: #222; }
+  h1 { font-size: 24px; } h2 { font-size: 16px; color: #555; }
+  .metric { display: inline-block; width: 30%; text-align: center; }
+  .score { font-size: 32px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { padding: 8px; border: 1px solid #ddd; }
+</style>
+</head><body>
+  <h1>Weekly Report — {{ student_name }}</h1>
+  <p>Week of {{ week_label }}</p>
+  <div class="metric">
+    <div class="score">{{ study_hours }}h</div>
+    <div>Study time</div>
+  </div>
+  <div class="metric">
+    <div class="score">{{ avg_score }}%</div>
+    <div>Avg test score</div>
+  </div>
+  <h2>Subjects</h2>
+  <table>
+    {% for subj, score in subject_scores.items() %}
+    <tr><td>{{ subj }}</td><td>{{ score }}%</td></tr>
+    {% endfor %}
+  </table>
+  <h2>Recommendations</h2>
+  <ul>{% for tip in tips %}<li>{{ tip }}</li>{% endfor %}</ul>
+</body></html>`,tags:['file']},
+{t:'Write PDF generation task',d:'Add to apps/api/app/tasks/report_tasks.py',code:`from app.core.celery_app import celery_app
+from weasyprint import HTML
+from jinja2 import Environment, FileSystemLoader
+import os
+
+env = Environment(loader=FileSystemLoader('templates'))
+
+@celery_app.task
+def generate_weekly_report(student_id: str):
+    template = env.get_template('weekly_report.html')
+    html_content = template.render(
+        student_name="Arjun",
+        week_label="May 5–11, 2025",
+        study_hours=8.5,
+        avg_score=76,
+        subject_scores={"Science": 72, "Math": 85},
+        tips=["Review photosynthesis chapter",
+              "Practice more algebra problems"]
+    )
+    pdf_bytes = HTML(string=html_content).write_pdf()
+    # Save to Supabase Storage or S3
+    # Then email to parent via SendGrid
+    return {"size_bytes": len(pdf_bytes)}`,tags:['file']},
+{t:'Schedule weekly reports with Celery Beat',d:'Add to apps/api/main.py or celery config',code:`from celery.schedules import crontab
+
+celery_app.conf.beat_schedule = {
+    'weekly-reports-sunday': {
+        'task': 'app.tasks.report_tasks.generate_all_weekly_reports',
+        'schedule': crontab(hour=2, minute=30, day_of_week=0),  # Sunday 8am IST = 2:30 UTC
+    }
+}`,tags:['file']},
+]},
+{title:'Step 5 — Parent portal page',steps:[
+{t:'Create parent portal at app/(parent)/portal/page.tsx',d:'Shows alerts, weekly reports download link, and child performance overview.',code:`'use client'
+export default function ParentPortal() {
+  return (
+    <div className="p-6">
+      <h1 className="text-xl font-medium mb-6">Parent Portal</h1>
+      <div className="grid gap-4">
+        <div className="bg-white rounded-xl p-4 border">
+          <h2 className="font-medium mb-3">Recent alerts</h2>
+          {/* Map over behavior_incidents from API */}
+          <div className="text-sm text-orange-600 py-2 border-b">
+            Gaze away detected — Today 3:42 PM
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-4 border">
+          <h2 className="font-medium mb-3">Weekly reports</h2>
+          <a href="#" className="text-sm text-blue-600">
+            Download report — May 5–11, 2025
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}`,tags:['file']},
+]},
+{title:'Step 6 — Onboarding wizard for new students',steps:[
+{t:'Create 4-step onboarding at app/(student)/onboard/page.tsx',d:'Steps: profile → subjects → upload textbooks → diagnostic quiz. Block session access until one textbook is in ready status.',code:`'use client'
+import { useState } from 'react'
+
+const steps = ['Profile', 'Subjects', 'Textbooks', 'Quick check']
+
+export default function Onboarding() {
+  const [step, setStep] = useState(0)
+  const [profile, setProfile] = useState({name:'', grade:10, board:'CBSE'})
+  const [subjects, setSubjects] = useState<string[]>([])
+
+  return (
+    <div className="max-w-lg mx-auto p-8">
+      {/* Step indicator */}
+      <div className="flex gap-2 mb-8">
+        {steps.map((s, i) => (
+          <div key={s} className={\`flex-1 h-1 rounded \${i <= step ? 'bg-blue-500' : 'bg-gray-200'}\`}/>
+        ))}
+      </div>
+      {step === 0 && (
+        <div>
+          <h2 className="text-lg font-medium mb-4">Tell us about yourself</h2>
+          <input placeholder="Your name" className="w-full border rounded p-2 mb-3"
+            value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})}/>
+          <select className="w-full border rounded p-2 mb-3"
+            value={profile.grade} onChange={e => setProfile({...profile, grade: +e.target.value})}>
+            {[6,7,8,9,10,11,12].map(g => <option key={g}>{g}</option>)}
+          </select>
+          <button onClick={() => setStep(1)}
+            className="w-full bg-blue-600 text-white py-2 rounded">Next</button>
+        </div>
+      )}
+      {/* Steps 1-3 follow same pattern */}
+    </div>
+  )
+}`,tags:['file']},
+]},
+{title:'Final checklist — full app working end to end',steps:[
+{t:'Onboarding: complete all 4 steps with a test account',tags:['warn']},
+{t:'Session: upload textbook → start session → speak → get AI response grounded in the book',tags:['warn']},
+{t:'Behavior: camera monitoring triggers incident after 3s no face',tags:['warn']},
+{t:'Test: generate test → answer questions → get scores and feedback',tags:['warn']},
+{t:'Dashboard: study hours and weak topics visible',tags:['warn']},
+{t:'PDF report: runs without errors and output is under 1.5MB',tags:['warn']},
+{t:'Two accounts: student A cannot see student B data (RLS test)',tags:['warn']},
+]}
+]}
+]
+
+const state = {}
+
+function countSteps(phase){
+  let total=0,done=0
+  phase.sections.forEach(s=>s.steps.forEach(step=>{
+    total++
+    if(state[step.t]) done++
+  }))
+  return {total,done}
+}
+
+function toggle(stepTitle){
+  state[stepTitle]=!state[stepTitle]
+  render()
+}
+
+let currentPhase=0
+
+function render(){
+  const pnav=document.getElementById('pnav')
+  const phasesEl=document.getElementById('phases')
+  pnav.innerHTML=phases.map((p,i)=>`
+    <button class="pnav ${i===currentPhase?'active':''}" onclick="switchPhase(${i})">${p.label}</button>
+  `).join('')
+  phasesEl.innerHTML=phases.map((p,i)=>{
+    const {total,done}=countSteps(p)
+    const pct=total?Math.round(done/total*100):0
+    return `
+    <div class="phase ${p.id} ${i===currentPhase?'active':''}">
+      <div class="phase-header">
+        <div class="phase-badge">${p.label}</div>
+        <div class="phase-title">${p.title}</div>
+        <div class="phase-sub">${p.sub}</div>
+        <div class="phase-weeks">${p.weeks} · ${done}/${total} steps complete</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total steps</div></div>
+        <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Completed</div></div>
+        <div class="stat"><div class="stat-n">${pct}%</div><div class="stat-l">Progress</div></div>
+      </div>
+      ${p.sections.map(sec=>`
+        <div class="section">
+          <div class="section-title">${sec.title}</div>
+          ${sec.steps.map(step=>`
+            <div class="step" onclick="toggle('${step.t.replace(/'/g,"\\'")}')">
+              <div class="cb ${state[step.t]?'done':''}"></div>
+              <div class="step-body">
+                <div class="step-title ${state[step.t]?'done-text':''}">${step.t}</div>
+                ${step.d?`<div class="step-desc">${step.d}</div>`:''}
+                ${step.code?`<div class="step-code">${step.code}</div>`:''}
+                ${step.tags?step.tags.map(tag=>`<span class="tag tag-${tag}">${tag==='cmd'?'terminal':tag==='file'?'create file':tag==='warn'?'important':tag==='key'?'secret/key':tag}</span>`).join(''):''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('')}
+      <div class="nav-btns">
+        <button class="nav-btn" onclick="switchPhase(${i-1})" ${i===0?'disabled':''}>← Previous phase</button>
+        <button class="nav-btn" onclick="switchPhase(${i+1})" ${i===phases.length-1?'disabled':''}>Next phase →</button>
+      </div>
+    </div>`
+  }).join('')
+}
+
+function switchPhase(i){
+  if(i<0||i>=phases.length)return
+  currentPhase=i
+  render()
+  document.getElementById('phases').scrollIntoView({behavior:'smooth',block:'start'})
+}
+
+render()
+</script>
