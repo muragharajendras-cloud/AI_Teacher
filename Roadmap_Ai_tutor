@@ -1,0 +1,756 @@
+
+AI TUTOR
+Complete Implementation Roadmap  ·  Professional Edition
+7
+Build Phases
+22
+Total Weeks
+40+
+Features
+3
+User Roles
+PREPARED FOR: AI Tutor Platform
+Full-Stack  ·  Production-Grade  ·  Scalable to 10,000+ Students
+
+Executive Overview
+This roadmap builds a production-grade AI Teaching Assistant that delivers personalized, voice-based tutoring driven strictly by the student's own uploaded textbooks. Below is a high-level summary of what will be built, the technical approach, and the expected outcome at each phase boundary.
+
+Architecture at a Glance
+Layer
+Technology
+Frontend
+Next.js 14 (App Router) · TypeScript · Tailwind CSS
+Backend API
+FastAPI (Python) · Async · Auto-docs · WebSocket support
+Database
+PostgreSQL 15 (primary) · Redis 7 (cache & pub/sub)
+AI / LLM
+GPT-4o for teaching & evaluation · Whisper for STT · ElevenLabs TTS
+RAG Pipeline
+LangChain · OpenAI Embeddings · Pinecone (prod) / FAISS (dev)
+CV / Vision
+MediaPipe WASM (browser) · YOLOv8 nano (server)
+Task Queue
+Celery + Redis — background indexing, reports, notifications
+File Storage
+AWS S3 · CloudFront CDN
+Deployment
+Vercel (frontend) · AWS ECS Fargate (backend) · AWS RDS (DB)
+Monitoring
+Sentry (errors) · AWS CloudWatch (infra) · GitHub Actions (CI/CD)
+
+Key Architectural Decisions & Why
+Several decisions in the original roadmap have been optimized based on production experience:
+
+Decision
+Rationale
+Supabase over raw AWS
+Supabase combines PostgreSQL + Auth + Storage + Realtime in one managed service. This eliminates 3 separate AWS services for early phases, reducing ops burden. Migrate to raw RDS only when you exceed 50K students.
+Single vector namespace
+Original roadmap stored FAISS indexes per student locally. Switch to Pinecone with student_id + subject as namespace. Avoids S3 I/O for index re-loads on every query — 10x faster retrieval.
+Structured state via Redis
+Session state machine stored in Redis as JSON, keyed by session_id. Allows stateless backend pods — any ECS instance can handle any WebSocket. Critical for auto-scaling.
+Whisper streaming (VAD)
+Original roadmap sends full audio blobs. Replace with 200ms VAD (Voice Activity Detection) chunks. Reduces transcription latency from ~2s to ~400ms. Students feel heard instantly.
+MediaPipe off main thread
+Run MediaPipe in a Web Worker, not the main thread. Original code blocks UI rendering at 10fps. Web Worker approach gives true 10fps CV without janky sessions.
+ELO seeded from test score
+Don't start all students at ELO 1000. Seed from onboarding diagnostic score. Students get correctly-pitched questions from session 1, not after 5 wrong answers.
+
+What You Get at the End
+    • Students can upload any PDF textbook and get a voice-interactive AI tutor that teaches ONLY from that book
+    • The tutor explains → asks → evaluates → adapts in a real-time state machine, detecting confusion automatically
+    • Camera-based behavior monitoring detects gaze-away, phone use, and absence — parents notified in under 30 seconds
+    • Auto-generated mock tests with 5 question types and 3 grading methods (exact, semantic, LLM-rubric)
+    • Student and parent dashboards with weekly PDF reports, performance trends, and AI recommendations
+    • Adaptive difficulty via ELO — every student's questions are calibrated to their current level
+    • Multi-language support: Hindi, English, Hinglish — auto-detected and maintained per session
+    • Full CI/CD, monitoring, and production deployment on AWS + Vercel
+
+
+PHASE 1  │  Foundation & Infrastructure
+Weeks 1–3     ·   Project skeleton · Auth · Database · CI/CD
+
+Goal
+Build the complete project skeleton, configure infrastructure with developer-experience first, design the database schema to support all 7 phases without a re-migration, and implement production-grade auth. Every subsequent phase depends on this being rock-solid.
+
+Critical Improvements Over Original
+
+⚠  NOTE: The original roadmap uses bare AWS from day 1. Replace with Supabase for Phases 1–4 to eliminate ops complexity. You can migrate to raw RDS/S3 when you genuinely need the control.
+
+Component
+Optimized Approach
+Auth
+Supabase Auth replaces manual JWT — handles email, OTP, OAuth. Row-Level Security (RLS) enforces per-student data isolation at DB level — no code needed.
+Database
+Supabase Postgres over bare RDS. Saves 6 hours of setup. RLS policies replace custom permission checks in every API route.
+Storage
+Supabase Storage for textbooks, photos, reports in dev. Switch to S3 + CloudFront only in Phase 7 for production CDN performance.
+Realtime
+Supabase Realtime (built on PostgreSQL LISTEN/NOTIFY) for parent notification feed — no extra Redis pub/sub channel needed.
+
+Folder Structure
+ai-tutor/
+├── apps/
+│   ├── web/                    # Next.js 14 (App Router)
+│   │   ├── app/
+│   │   │   ├── (auth)/         # login, register, onboarding
+│   │   │   ├── (student)/      # session, dashboard, tests
+│   │   │   ├── (parent)/       # parent portal, alerts
+│   │   │   └── (admin)/        # admin panel
+│   │   ├── components/
+│   │   ├── lib/                # api client, hooks, stores
+│   │   └── public/
+│   └── api/                    # FastAPI backend
+│       ├── app/
+│       │   ├── api/            # route handlers
+│       │   ├── core/           # config, security, db connection
+│       │   ├── models/         # SQLAlchemy ORM models
+│       │   ├── schemas/        # Pydantic v2 schemas
+│       │   ├── services/       # business logic (no DB calls here)
+│       │   └── tasks/          # Celery task definitions
+│       └── alembic/
+├── packages/
+│   ├── ai-engine/              # LLM, RAG, evaluator (shared lib)
+│   └── vision/                 # CV service
+├── infra/                      # Terraform / CDK stacks
+├── docker-compose.yml
+└── .github/workflows/
+
+Database Schema — Full 7-Phase Model
+Design the full schema now. Adding columns later with ALTER TABLE on live data is risky. Every table below is used in a specific phase — do not skip any.
+
+-- users: all roles share one table, role field gates access
+CREATE TABLE users (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email       TEXT UNIQUE NOT NULL,
+  role        TEXT CHECK(role IN ('student','parent','admin')),
+  created_at  TIMESTAMPTZ DEFAULT now()
+);
+ 
+-- student_profiles: linked 1:1 with users where role='student'
+CREATE TABLE student_profiles (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID REFERENCES users(id) ON DELETE CASCADE,
+  parent_id   UUID REFERENCES users(id),
+  name        TEXT NOT NULL,
+  grade       INT,
+  board       TEXT,            -- CBSE/ICSE/State/IB
+  subjects    JSONB,           -- ['Math','Science']
+  elo_ratings JSONB DEFAULT '{}',  -- {'Math.Chapter1': 1000, ...}
+  onboarded   BOOLEAN DEFAULT false
+);
+ 
+-- textbooks: indexed PDFs per student per subject
+CREATE TABLE textbooks (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id  UUID REFERENCES student_profiles(id),
+  subject     TEXT, grade INT, board TEXT,
+  s3_key      TEXT,
+  status      TEXT CHECK(status IN ('uploading','indexing','ready','failed')),
+  chunk_count INT,
+  uploaded_at TIMESTAMPTZ DEFAULT now()
+);
+ 
+-- sessions: one row per teaching session
+CREATE TABLE sessions (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id   UUID REFERENCES student_profiles(id),
+  subject      TEXT, chapter TEXT,
+  started_at   TIMESTAMPTZ DEFAULT now(),
+  ended_at     TIMESTAMPTZ,
+  duration_min INT,
+  transcript   JSONB,         -- [{role, content, ts}]
+  elo_delta    JSONB          -- per-chapter ELO changes this session
+);
+ 
+-- behavior_incidents: CV detections during sessions
+CREATE TABLE behavior_incidents (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id   UUID REFERENCES sessions(id),
+  student_id   UUID,
+  type         TEXT,          -- 'gaze_away','no_face','phone_detected'
+  photo_url    TEXT,
+  notified_at  TIMESTAMPTZ,
+  ts           TIMESTAMPTZ DEFAULT now()
+);
+ 
+-- test_results: per-question breakdown
+CREATE TABLE test_results (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id   UUID,
+  subject      TEXT, chapter TEXT,
+  score        FLOAT, max_score FLOAT,
+  answers      JSONB,         -- [{q_id, earned, max, type, feedback}]
+  taken_at     TIMESTAMPTZ DEFAULT now()
+);
+ 
+-- Row Level Security (Supabase) — students see ONLY their data
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY student_own_sessions ON sessions
+  USING (student_id = auth.uid());
+
+Authentication
+Use Supabase Auth for Phase 1–6. It gives you email/password, magic links, and OAuth for free. The supabase-js client auto-refreshes tokens — zero JWT boilerplate.
+
+# Three lines to protect any FastAPI route with Supabase Auth:
+from supabase import create_client
+supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+ 
+async def get_current_user(authorization: str = Header(...)):
+    token = authorization.replace('Bearer ', '')
+    user = supabase.auth.get_user(token)
+    if not user: raise HTTPException(401)
+    return user.user
+ 
+# Frontend — Supabase client handles everything:
+const { data, error } = await supabase.auth.signInWithPassword(
+  { email, password }
+)
+// JWT auto-stored in httpOnly cookie, refreshed silently
+
+Phase 1 Completion Checklist
+    • Docker Compose starts all services (postgres, redis, backend, frontend, celery) cleanly
+    • Alembic migrations run — all 6 tables created with RLS policies
+    • Supabase Auth: signup → email confirm → login → protected route all working
+    • Student, parent, and admin roles each see only their own data
+    • GitHub Actions: lint + pytest + build runs green on every push to main
+    • All environment variables documented in .env.example — no secrets in git
+
+
+PHASE 2  │  Textbook Ingestion & RAG Pipeline
+Weeks 4–6     ·   PDF → chunks → embeddings → Pinecone → semantic search
+
+Goal
+Build the knowledge backbone. Every AI answer in this system must trace back to the student's own textbook. The quality of this pipeline directly determines the quality of every teaching session, every test, and every explanation.
+
+Optimized RAG Architecture
+Stage
+Optimized Implementation
+Stage 1 — Upload
+Student uploads PDF via presigned Supabase Storage URL. Backend receives callback, updates textbooks.status = 'indexing', fires Celery task.
+Stage 2 — Extract
+PyMuPDF extracts text per page. CRITICAL: detect and skip image-only pages (scanned textbooks). Use pytesseract OCR fallback for scanned pages — original roadmap silently produces empty chunks.
+Stage 3 — Chunk
+800-token chunks, 100-token overlap. IMPROVEMENT: add chapter boundary detection using heading regex. Chunks never cross chapter boundaries — prevents context pollution between topics.
+Stage 4 — Embed
+OpenAI text-embedding-3-small for each chunk. Batch in groups of 100 to stay under API rate limits. Cache embeddings in Redis for 24h — re-indexing the same book is instant.
+Stage 5 — Store
+Upsert to Pinecone with namespace = f'{student_id}_{subject}'. Metadata: chapter, page, subject, grade. FAISS in dev only.
+Stage 6 — Query
+Query → embed → Pinecone similarity search (top 5) → MMR re-rank (reduces duplicate chunks) → inject into LLM context.
+
+Critical Code — OCR Fallback for Scanned Books
+
+🔑  CRITICAL: Many Indian textbooks (especially state board) are scanned PDFs. Without OCR fallback, these produce zero chunks and the AI tutor has nothing to teach from. This is the single biggest gap in the original roadmap.
+
+import fitz, pytesseract
+from PIL import Image
+import io
+ 
+def extract_text_smart(pdf_path: str) -> list[dict]:
+    doc = fitz.open(pdf_path)
+    pages = []
+    for i, page in enumerate(doc):
+        text = page.get_text('text').strip()
+        if len(text) < 50:  # likely scanned
+            # render page as image → OCR
+            pix = page.get_pixmap(dpi=300)
+            img = Image.open(io.BytesIO(pix.tobytes('png')))
+            text = pytesseract.image_to_string(img, lang='eng+hin')
+        pages.append({'text': text, 'page': i+1, 'ocr': len(text)<50})
+    return pages
+ 
+# Chapter detection — headings in CBSE books are usually
+# ALL CAPS lines fewer than 60 chars
+import re
+def detect_chapter(text: str) -> str | None:
+    match = re.search(r'^([A-Z][A-Z\s]{4,50})$', text, re.MULTILINE)
+    return match.group(1).strip() if match else None
+
+Pinecone Setup (Production)
+from pinecone import Pinecone, ServerlessSpec
+from langchain_pinecone import PineconeVectorStore
+from langchain_openai import OpenAIEmbeddings
+ 
+pc = Pinecone(api_key=PINECONE_API_KEY)
+ 
+# Create index once (idempotent)
+if 'aitutor' not in [i.name for i in pc.list_indexes()]:
+    pc.create_index('aitutor', dimension=1536,
+        spec=ServerlessSpec(cloud='aws', region='us-east-1'))
+ 
+def get_vectorstore(student_id: str, subject: str):
+    embeddings = OpenAIEmbeddings(model='text-embedding-3-small')
+    return PineconeVectorStore(
+        index_name='aitutor',
+        embedding=embeddings,
+        namespace=f'{student_id}_{subject}'
+    )
+ 
+def retrieve_context(question: str, student_id: str,
+                     subject: str, k: int = 5) -> str:
+    vs = get_vectorstore(student_id, subject)
+    # MMR = Maximal Marginal Relevance — reduces duplicate chunks
+    docs = vs.max_marginal_relevance_search(question, k=k, fetch_k=20)
+    return '\n\n---\n\n'.join(d.page_content for d in docs)
+
+Phase 2 Completion Checklist
+    • OCR fallback works on a scanned PDF (test with a state board textbook image)
+    • Chapter boundary detection produces chunks that don't cross chapters
+    • Pinecone upsert completes for a 300-page textbook in under 3 minutes
+    • MMR retrieval returns 5 non-duplicate relevant chunks for 10 test questions
+    • Namespace isolation confirmed: student A's query never returns student B's content
+    • Re-indexing same book skips embedding (cache hit) and completes in under 10 seconds
+
+
+PHASE 3  │  Teaching Engine, Voice & Real-Time Sessions
+Weeks 7–10     ·   State machine · GPT-4o · Whisper VAD · ElevenLabs · WebSocket
+
+Goal
+Build the core product — the interactive AI tutor. This is the feature students will use for hours daily. Quality here directly determines user retention. The teaching engine must feel like a patient, knowledgeable human teacher — not a chatbot.
+
+Teaching State Machine — Optimized
+State
+AI Behavior
+GREET
+First turn. AI greets student by name, asks what chapter they want to study today. Loads teaching context.
+EXPLAIN
+Delivers concept in 2-3 sentences max. Uses simple language for the student's grade. Pauses naturally.
+QUESTION
+Asks exactly ONE focused check-in question. Never multi-part. Calibrated to current ELO difficulty.
+WAIT
+Silent listening state. 8-second silence timeout triggers a gentle prompt: 'Take your time…'
+EVALUATE
+Scores student response: CORRECT / PARTIAL / WRONG. Logs ELO delta.
+PRAISE
+On CORRECT: warm, specific praise ('You got the key point — the chlorophyll absorbs light'). Advance topic.
+SIMPLIFY
+On PARTIAL: acknowledge what was right, re-explain the gap differently. One more attempt.
+RETEACH
+On 2 consecutive WRONG: completely different angle (analogy, real-world example). Lower ELO by 15.
+DOUBT
+Student asks a question (detected via '?' or question words). Answer from RAG. Return to prior state.
+SUMMARY
+End of session: 3-point summary of what was covered. Preview of next session's topic.
+
+Optimized System Prompt
+
+✓  BEST PRACTICE: The system prompt is the most important code in this entire project. A weak prompt produces a generic chatbot. The prompt below is engineered for grade-appropriate teaching with strict textbook grounding.
+
+TEACHER_SYSTEM_PROMPT = '''
+You are {student_name}'s personal AI teacher for {subject}, Grade {grade}.
+You are warm, patient, encouraging, and deeply knowledgeable.
+ 
+═══ ABSOLUTE RULES (never break these) ═══
+1. Answer ONLY from the TEXTBOOK CONTEXT provided below.
+   If something is not in the context, say 'Let me check our textbook'
+   and look for it — never use outside knowledge.
+2. NEVER give the full answer before the student tries.
+   Guide with hints. Wait for their attempt first.
+3. After every 2-3 sentences of explanation, STOP and ask ONE question.
+4. Match language to the student. If they write Hindi, respond in Hindi.
+   Keep technical terms in English even in Hindi responses.
+5. Respond in 100 words or fewer per turn. Be concise.
+ 
+═══ CURRENT CONTEXT ═══
+State: {state} | Topic: {topic} | Difficulty: {difficulty}
+Wrong streak: {wrong_streak} | Session turns: {turn_count}
+ 
+═══ TEXTBOOK CONTENT (use ONLY this) ═══
+{context}
+ 
+═══ CONVERSATION SO FAR ═══
+{history}
+ 
+Student just said: '{student_input}'
+Respond now as the teacher:'''
+
+Voice Pipeline — VAD Streaming (Key Improvement)
+The original roadmap sends full audio blobs after the student stops speaking. This causes 2–4 second transcription delays. Replace with Voice Activity Detection (VAD) streaming using @ricky0123/vad-web in the browser:
+
+// frontend/lib/voiceSession.ts
+import { useMicVAD } from '@ricky0123/vad-react'
+ 
+export function useVoiceSession(sessionId: string) {
+  const { start, stop } = useMicVAD({
+    onSpeechStart: () => console.log('Listening...'),
+    onSpeechEnd: async (audio: Float32Array) => {
+      // VAD fires immediately when student stops speaking
+      // audio = Float32Array WAV — no silence padding
+      const blob = encodeWAV(audio)
+      const text = await transcribe(blob)    // POST /voice/transcribe
+      ws.send(JSON.stringify({ type: 'student_text', text }))
+    },
+    positiveSpeechThreshold: 0.8,
+    minSpeechFrames: 3,
+  })
+  return { start, stop }
+}
+ 
+// Result: transcription starts 0ms after student stops speaking
+// vs original: 1-2s of silence wait + upload delay
+
+WebSocket Session Architecture
+Concern
+Solution
+Connection
+Student opens ws://api/ws/session/{id}. Session engine loaded from Redis. Greeting streamed immediately.
+Token stream
+Each LLM token streamed as { type:'chunk', text } — student sees response appear word by word.
+Turn end
+{ type:'turn_end' } signals frontend to play TTS audio. TTS request fires in parallel with LLM streaming.
+Reconnection
+If WebSocket drops, client auto-reconnects with same session_id. Redis state preserves full history.
+Heartbeat
+30-second ping/pong. If 2 consecutive pongs missed, server saves transcript and closes session gracefully.
+Concurrency
+Each session runs in an asyncio task. FastAPI handles 500+ concurrent sessions on a single worker.
+
+Phase 3 Completion Checklist
+    • Full state machine cycles through all 10 states in a test conversation
+    • VAD transcription latency under 500ms from end-of-speech to text appearing
+    • Wrong-streak detection triggers RETEACH after exactly 2 consecutive wrong answers
+    • ElevenLabs TTS begins streaming before full LLM response is complete (parallel pipeline)
+    • WebSocket reconnects within 2 seconds and resumes exactly where session left off
+    • System prompt never leaks to student — system messages never appear in chat UI
+    • 100+ word AI response trimmed — verify prompt's 100-word instruction is respected
+
+
+PHASE 4  │  Behavior Monitoring (Computer Vision)
+Weeks 11–13     ·   MediaPipe · YOLOv8 · Web Worker · parent alerts
+
+Goal
+Detect attention lapses (gaze-away, phone use, absence from frame) using computer vision, log incidents with screenshots, and notify parents in real time. Privacy is non-negotiable: raw video never leaves the browser.
+
+Privacy-First Architecture
+
+🔑  CRITICAL: Legal requirement: show a 'Camera active — behavior is being monitored' banner at all times during session. Store explicit consent record with timestamp in DB. Without consent, monitoring must not activate.
+
+Data
+Handling
+Raw video
+NEVER sent to server. Stays in browser MediaStream.
+MediaPipe
+Runs in a Web Worker (not main thread). Prevents UI jank during CV processing.
+Frame sampling
+Analyze 1 frame per second (not 10fps). Sufficient for detection, 10x cheaper CPU.
+Snapshots
+Low-res JPEG (320×240) captured only on incident trigger. Not stored unless incident confirmed.
+S3 photos
+Encrypted at rest (SSE-S3). 30-day lifecycle policy auto-deletes. Presigned URLs expire in 1 hour.
+Phone detection
+Frame sent to server only every 5 seconds. Server-side YOLOv8 — confidence threshold 0.65+.
+
+Optimized Browser Detection (Web Worker)
+// frontend/workers/behaviorWorker.ts
+// Runs entirely off main thread — UI never blocks
+import { FaceMesh } from '@mediapipe/face_mesh'
+ 
+const GAZE_THRESHOLD_FRAMES = 10   // 10s at 1fps
+const NOFACE_THRESHOLD_FRAMES = 3  // 3s at 1fps
+ 
+let gazeCount = 0, nofaceCount = 0
+ 
+function handleResults(results) {
+  if (!results.multiFaceLandmarks?.length) {
+    if (++nofaceCount >= NOFACE_THRESHOLD_FRAMES)
+      self.postMessage({ type: 'incident', kind: 'no_face' })
+    return
+  }
+  nofaceCount = 0
+  const score = computeGazeScore(results.multiFaceLandmarks[0])
+  if (score < 0.35) {
+    if (++gazeCount >= GAZE_THRESHOLD_FRAMES)
+      self.postMessage({ type: 'incident', kind: 'gaze_away' })
+  } else {
+    gazeCount = 0
+  }
+}
+ 
+// Main thread posts ImageBitmap to worker — zero copy transfer
+self.onmessage = async ({ data: { frame } }) => {
+  await faceMesh.send({ image: frame })
+}
+
+Incident Response Flow
+Step
+Action
+Step 1 — Detect
+Web Worker fires 'incident' message to main thread with kind and timestamp.
+Step 2 — Cooldown
+Main thread checks: was an incident of this type fired in the last 60 seconds? If yes, ignore. Prevents spam notifications.
+Step 3 — Snapshot
+Capture 320×240 JPEG from video element. Canvas API, no server needed.
+Step 4 — Upload
+POST snapshot + incident metadata to /behavior/incident. Celery task uploads photo to S3.
+Step 5 — Notify
+Celery task sends SendGrid email + Firebase push to parent. Target: under 30s total.
+Step 6 — Log
+Insert row in behavior_incidents with type, session_id, photo_url, ts.
+
+Phase 4 Completion Checklist
+    • Consent screen shown and consent record saved before camera activates
+    • MediaPipe runs in Web Worker — main thread FPS stays above 55 during session
+    • 60-second cooldown prevents duplicate notifications for same incident type
+    • Parent email delivered within 30 seconds of incident on test network
+    • Photo S3 URL expires after 1 hour when accessed via presigned URL
+    • S3 lifecycle policy confirmed — photos deleted after 30 days in test bucket
+
+
+PHASE 5  │  Mock Test & Auto-Evaluation System
+Weeks 14–16     ·   Question generation · 3-tier grading · ELO update · analytics
+
+Goal
+Auto-generate chapter-specific tests from the student's textbook, conduct timed exams with server-enforced timers, auto-grade all question types with 3 grading methods, and feed results back into the ELO rating system to adjust future teaching difficulty.
+
+Question Generation — Improved Prompt Strategy
+
+✓  BEST PRACTICE: The original roadmap uses a single LLM call for all question types. Split into 3 parallel calls (MCQ, short, descriptive). This halves generation time and allows different temperature settings per type.
+
+Type
+Generation Strategy
+MCQ (temp 0.2)
+Low temperature for factual accuracy. Force JSON with 4 options, one correct, one plausible distractor, two clearly wrong. Distractors are the hardest part — bad distractors make MCQs trivial.
+Short answer (temp 0.3)
+Medium temp for varied question phrasing. Include model_answer (2-3 sentences), key_terms list (for semantic matching), and marks.
+Descriptive (temp 0.5)
+Higher temp for more open-ended prompts. Include a detailed marking_rubric with 3-4 criteria and points each. LLM grader uses this rubric.
+
+3-Tier Grading System
+# Tier 1: Exact match (MCQ, True/False, Fill-in-blank)
+def grade_exact(answer: str, correct: str) -> float:
+    return 1.0 if answer.strip().upper() == correct.strip().upper() else 0.0
+ 
+# Tier 2: Semantic similarity (Short answer)
+# Improvement: also check key_terms coverage — partial credit
+from sentence_transformers import SentenceTransformer, util
+model = SentenceTransformer('all-MiniLM-L6-v2')
+ 
+def grade_short(student: str, model_ans: str,
+                key_terms: list, marks: int) -> float:
+    sim = float(util.cos_sim(
+        model.encode(student), model.encode(model_ans)))
+    term_hits = sum(1 for t in key_terms
+                   if t.lower() in student.lower())
+    term_score = term_hits / max(len(key_terms), 1)
+    # Weighted: 60% semantic similarity, 40% key term coverage
+    composite = 0.6 * sim + 0.4 * term_score
+    if composite > 0.80: return marks
+    if composite > 0.60: return marks * 0.75
+    if composite > 0.40: return marks * 0.5
+    return 0.0
+ 
+# Tier 3: LLM rubric (Descriptive)
+def grade_descriptive(student: str, rubric: str, marks: int) -> dict:
+    # Returns score AND feedback — shown to student
+    response = llm.invoke(f'''
+Grade this answer. Return JSON: {{score: float, feedback: str}}
+Marks available: {marks}
+Rubric: {rubric}
+Student answer: {student}
+    ''')
+    return json.loads(response.content)
+
+ELO Update After Test
+After every test, update the student's ELO rating for each chapter tested. This feeds back into Phase 3's teaching engine to adjust difficulty in the next session.
+
+def update_elo_from_test(student_id: str, subject: str,
+                          chapter: str, pct_score: float):
+    # Fetch current ELO from student_profiles.elo_ratings
+    current = get_elo(student_id, subject, chapter)  # default 1000
+ 
+    # Score >= 70% = correct signal, < 50% = wrong signal
+    if pct_score >= 0.70:   delta = +25
+    elif pct_score >= 0.50: delta = +5
+    elif pct_score >= 0.30: delta = -10
+    else:                   delta = -20
+ 
+    new_elo = max(100, min(2000, current + delta))
+    update_elo(student_id, subject, chapter, new_elo)
+    return { 'old': current, 'new': new_elo, 'delta': delta }
+
+Phase 5 Completion Checklist
+    • Parallel question generation produces all 3 types in under 8 seconds
+    • MCQ distractors are plausible — verify manually with 5 test questions
+    • Semantic grading gives partial credit (0.5×) for half-correct short answers
+    • Descriptive grading returns both score AND feedback text shown to student
+    • ELO correctly updates after test — verify in DB for 3 different score levels
+    • Server-side timer enforcement: POST after expiry returns 403 Forbidden
+
+
+PHASE 6  │  Dashboards, Reports & Notifications
+Weeks 17–19     ·   Student dashboard · parent portal · PDF reports · weekly email
+
+Goal
+Build data-rich dashboards that make performance visible to students and parents. Auto-generate weekly PDF reports. The dashboard is often the first thing a parent sees — it must be polished and load fast.
+
+Dashboard Data Strategy
+
+✓  BEST PRACTICE: Never compute dashboard metrics on request. Use a background task that recomputes metrics after every session end and test submission, storing results in a materialized JSON column. Dashboard queries become single-row fetches.
+
+# backend/app/tasks/metrics_tasks.py
+# Triggered by: session end, test submit, incident log
+@celery.task
+def recompute_student_metrics(student_id: str):
+    sessions = get_sessions(student_id, limit=90)  # last 90 days
+    tests    = get_test_results(student_id)
+    behavior = get_incidents(student_id, days=7)
+ 
+    metrics = {
+      'study_hours_total': sum(s.duration_min or 0 for s in sessions) / 60,
+      'study_hours_week':  sum(s.duration_min or 0 for s in sessions
+                               if is_this_week(s.started_at)) / 60,
+      'sessions_week':     len([s for s in sessions if is_this_week(s.started_at)]),
+      'subject_avg':       compute_subject_averages(tests),
+      'subject_trend':     compute_trends(tests),       # +/- per week
+      'weak_topics':       find_weak_chapters(tests),   # score < 50%
+      'strong_topics':     find_strong_chapters(tests), # score > 80%
+      'behavior_score':    compute_behavior_score(behavior), # 0-100
+      'elo_by_chapter':    get_elo_map(student_id),
+      'updated_at':        datetime.utcnow().isoformat()
+    }
+    # Store as single JSON — dashboard loads in <100ms
+    update_student_metrics_cache(student_id, metrics)
+
+Student Dashboard Components
+Component
+Detail
+Study streak
+Consecutive days studied — gamification hook. Shown prominently with a flame icon.
+Subject performance
+Recharts LineChart — score over time per subject. Toggle subjects on/off.
+ELO radar chart
+Recharts RadarChart — ELO level per chapter. Shows mastery map at a glance.
+Behavior score
+Weekly attention score 0-100. Simple gauge or colored circle. Green > 80, amber 50-80, red < 50.
+Test history
+Last 10 tests: subject, chapter, score, date. Click to see per-question breakdown.
+Weak topics
+AI-generated list of chapters with score < 50%. Click to start a session on that chapter.
+AI recommendations
+3 personalized improvement tips generated by GPT-4o weekly. Shown as cards.
+
+Weekly PDF Report (WeasyPrint)
+# Scheduled every Sunday 8am via Celery Beat
+# Template: Jinja2 HTML → WeasyPrint → S3 → SendGrid
+ 
+from celery.schedules import crontab
+celery.conf.beat_schedule = {
+    'weekly-reports': {
+        'task': 'tasks.generate_all_weekly_reports',
+        'schedule': crontab(hour=8, minute=0, day_of_week=0),
+    }
+}
+ 
+# Report structure:
+# 1. Cover: student name, week label, overall score
+# 2. Study time: hours this week vs last week
+# 3. Test performance: subject scores, trends
+# 4. Behavior: attention incidents with timestamps
+# 5. AI insights: 3 recommendations for next week
+# 6. Next steps: weak chapters to focus on
+
+Phase 6 Completion Checklist
+    • Dashboard loads from cached metrics in under 200ms (measure with DevTools)
+    • Metrics recompute within 5 seconds of session ending (Celery task latency)
+    • Radar chart shows correct ELO values for all studied chapters
+    • PDF report generates in under 20 seconds and is under 1.5MB
+    • Weekly email delivered at 8am Sunday in IST (UTC+5:30 offset correct)
+    • Cross-student data leakage test: student A cannot access student B's dashboard
+
+
+PHASE 7  │  Personalization, Hardening & Production Deployment
+Weeks 20–22     ·   Onboarding · Adaptive ELO · AWS · Load testing · Security audit
+
+Goal
+Wire personalization end-to-end, harden security, load-test to 50 concurrent sessions, and deploy the full stack to production on AWS. Phase 7 is not feature work — it is the difference between a demo and a product.
+
+Onboarding Flow (4-Step Wizard)
+Step
+Detail
+Step 1 — Profile
+Name, grade (1-12), school board (CBSE/ICSE/State/IB). Auto-detect board from school name if possible.
+Step 2 — Subjects
+Multi-select from grade-appropriate subjects. CBSE Grade 10 auto-suggests: Math, Science, SST, English, Hindi.
+Step 3 — Textbooks
+Drag-and-drop PDF upload per subject. Show real-time indexing progress bar via Supabase Realtime. Minimum 1 book to proceed.
+Step 4 — Preferences
+Session duration (30/45/60 min), language preference, notification settings. Seed ELO via a 5-question diagnostic quiz.
+
+
+⚠  NOTE: Do NOT let students start sessions before at least one textbook is in 'ready' status. Show a clear loading state with estimated time. Students who hit an empty session on day 1 will not return.
+
+ELO Diagnostic Seed
+Starting every student at ELO 1000 wastes the first 10-15 session turns recalibrating difficulty. Use a 5-question diagnostic at onboarding to seed the ELO correctly:
+
+def seed_elo_from_diagnostic(pct_correct: float) -> int:
+    # 5 questions, results map to ELO band
+    if pct_correct >= 0.80: return 1200   # advanced
+    if pct_correct >= 0.60: return 1000   # grade-level
+    if pct_correct >= 0.40: return 800    # needs support
+    return 600                            # foundational gaps
+ 
+# Questions generated from Chapter 1 of uploaded textbook
+# Mix: 2 easy, 2 medium, 1 hard MCQs
+# Student sees: 'Quick check — helps us personalise your experience'
+
+Production Deployment Stack
+Component
+Config
+Frontend
+Vercel — auto-deploy on git push. Edge CDN in Mumbai (ap-south-1). Next.js ISR for dashboard pages.
+Backend
+AWS ECS Fargate — containerized FastAPI. 2 vCPU / 4GB per pod. Auto-scale on WebSocket connection count.
+Database
+AWS RDS PostgreSQL 15 — db.t3.medium, Multi-AZ, automated daily backups. Migrate from Supabase at 10K+ students.
+Cache
+AWS ElastiCache Redis 7 — cache.t3.micro. Cluster mode off until 5K+ concurrent sessions.
+Vector Store
+Pinecone Serverless — us-east-1. No provisioning needed. Scales to millions of vectors.
+File Storage
+AWS S3 + CloudFront CDN — textbooks, reports, behavior photos in separate buckets with separate retention policies.
+Task Queue
+Celery workers on ECS Fargate — separate service, scales independently based on queue depth.
+Monitoring
+Sentry (errors + performance) + AWS CloudWatch (infra) + Grafana dashboard for business metrics.
+SSL
+AWS Certificate Manager (ACM) — auto-renewing TLS. CloudFront handles HTTPS termination.
+
+Performance Targets & How to Hit Them
+Metric + Target
+Implementation Approach
+First AI response  →  < 2s
+Stream tokens immediately. Start TTS in parallel. Preload teaching engine on session create, not on first message.
+WebSocket latency  →  < 150ms
+Redis session state. Minimize LLM context (last 10 turns only). Use gpt-4o-mini for EVALUATE state — it's 10x faster and sufficient.
+Textbook indexing  →  < 3min
+Celery parallel workers. Async OpenAI batch embeds (100 chunks per call). Pre-warm Pinecone index.
+Dashboard load  →  < 200ms
+Cached metrics JSON. SWR stale-while-revalidate on frontend. No blocking DB queries on page load.
+Test generation  →  < 8s
+3 parallel LLM calls. Cache question sets for same chapter for 24h.
+Behavior detection latency  →  < 100ms
+MediaPipe in Web Worker. 1fps sampling. Incident fires synchronously.
+
+Security Hardening Checklist
+    • All API endpoints require auth — run automated scan with OWASP ZAP
+    • Cross-student data access impossible via RLS + tested with two separate accounts
+    • Rate limiting on /auth/login (5 attempts per minute) to prevent brute force
+    • Presigned S3 URLs expire in 1 hour — verify with expired URL request
+    • All secrets in AWS Secrets Manager — nothing hardcoded, nothing in git
+    • CORS whitelist: only your Vercel domain — no wildcard origins
+    • WebSocket auth: token validated on handshake, not just on first message
+
+Load Testing Checklist
+    • 50 concurrent WebSocket sessions — CPU and memory stay under 70%
+    • 100 concurrent PDF uploads — Celery queue drains within 5 minutes
+    • 1000 simultaneous dashboard loads — Redis cache hit rate above 95%
+    • Pinecone query latency under 100ms at 50 concurrent queries
+
+
+
+
+
+END OF ROADMAP
+Execute phases sequentially. Phase 3 is the heart — invest disproportionately here.
