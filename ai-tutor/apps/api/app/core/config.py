@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     SUPABASE_ANON_KEY: str
 
     DATABASE_URL: str
+    REDIS_URL: str
 
     GROQ_API_KEY: str
     RESEND_API_KEY: Optional[str] = None
