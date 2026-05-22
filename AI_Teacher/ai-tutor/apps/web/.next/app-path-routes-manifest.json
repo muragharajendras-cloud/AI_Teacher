@@ -1,0 +1,23 @@
+{
+  "/(student)/dashboard/page": "/dashboard",
+  "/(student)/onboarding/page": "/onboarding",
+  "/(student)/session/[id]/page": "/session/[id]",
+  "/(student)/session/[id]/summary/page": "/session/[id]/summary",
+  "/(student)/tests/[id]/page": "/tests/[id]",
+  "/(student)/tests/[id]/results/page": "/tests/[id]/results",
+  "/(student)/tests/page": "/tests",
+  "/(student)/textbooks/page": "/textbooks",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/admin/metrics/page": "/admin/metrics",
+  "/admin/students/page": "/admin/students",
+  "/admin/textbooks/page": "/admin/textbooks",
+  "/favicon.ico/route": "/favicon.ico",
+  "/login/page": "/login",
+  "/page": "/",
+  "/parent/alerts/page": "/parent/alerts",
+  "/parent/dashboard/page": "/parent/dashboard",
+  "/parent/settings/page": "/parent/settings",
+  "/pricing/page": "/pricing",
+  "/register/page": "/register"
+}
