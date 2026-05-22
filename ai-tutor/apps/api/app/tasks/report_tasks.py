@@ -1,4 +1,4 @@
-from app.tasks.celery_app import celery_app
+
 from app.core.database import SessionLocal
 from app.models import StudentProfile
 import os
@@ -6,19 +6,17 @@ import tempfile
 from weasyprint import HTML
 from jinja2 import Environment, FileSystemLoader
 
-@celery_app.task
 def generate_all_weekly_reports():
     db = SessionLocal()
     try:
         profiles = db.query(StudentProfile).filter(StudentProfile.onboarded == True).all()
         for profile in profiles:
-            generate_and_send_report.delay(str(profile.id))
+            generate_and_send_report(str(profile.id))
     except Exception as e:
         print("Error scheduling weekly reports:", e)
     finally:
         db.close()
 
-@celery_app.task
 def generate_and_send_report(student_id: str):
     db = SessionLocal()
     try:

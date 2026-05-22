@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, BackgroundTasks
 import tempfile
 import os
 from sqlalchemy.orm import Session
@@ -15,7 +15,8 @@ async def report_incident(
     incident_type: str = Form(...), # 'gaze_away' or 'no_face'
     file: UploadFile = File(None),
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    background_tasks: BackgroundTasks = None
 ):
     student_profile = current_user.student_profile
     if not student_profile:
@@ -41,8 +42,9 @@ async def report_incident(
             tmp.write(content)
             tmp_path = tmp.name
 
-    # 3. Fire Celery background task
-    process_incident.delay(
+    # 3. Fire background task
+    background_tasks.add_task(
+        process_incident,
         incident_id=str(incident.id),
         photo_path=tmp_path,
         student_id=student_id,

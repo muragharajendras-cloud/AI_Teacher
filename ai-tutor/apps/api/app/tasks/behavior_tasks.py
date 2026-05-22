@@ -1,14 +1,13 @@
 import os
-from app.tasks.celery_app import celery_app
+
 from app.core.database import SessionLocal
 from app.models import BehaviorIncident
 from datetime import datetime
 import uuid
 
-@celery_app.task
 def process_incident(incident_id: str, photo_path: str, student_id: str, incident_type: str):
     """
-    Celery task to handle the heavy lifting of incident processing:
+    Background task to handle the heavy lifting of incident processing:
     1. Upload photo to S3 (mocked here, but structure is ready)
     2. Update DB with photo URL
     3. Send SendGrid email (mocked here)

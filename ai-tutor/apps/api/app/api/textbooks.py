@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status, BackgroundTasks
 import tempfile
 import os
 from sqlalchemy.orm import Session
@@ -16,7 +16,8 @@ async def upload_textbook(
     board: str = None,
     file: UploadFile = File(...),
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    background_tasks: BackgroundTasks = None
 ):
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
@@ -56,11 +57,12 @@ async def upload_textbook(
     db.commit()
 
     # 3. Fire background indexing task
-    task = index_textbook.delay(
+    background_tasks.add_task(
+        index_textbook,
         pdf_path=tmp_path,
         student_id=student_id,
         subject=subject,
         textbook_id=str(new_textbook.id)
     )
     
-    return {"task_id": task.id, "textbook_id": str(new_textbook.id), "status": "indexing"}
+    return {"textbook_id": str(new_textbook.id), "status": "indexing"}

@@ -9,9 +9,7 @@ services:
     ports: ["5432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
 
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
+
 
   backend:
     build: 
@@ -24,26 +22,10 @@ services:
     env_file: .env.example
     environment:
       - DATABASE_URL=postgresql://postgres:yourpassword@postgres:5432/aitutor
-      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - postgres
-      - redis
 
-  celery:
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile
-    command: celery -A app.tasks.celery_app worker --loglevel=info
-    volumes:
-      - ./apps/api:/app
-    env_file: .env.example
-    environment:
-      - DATABASE_URL=postgresql://postgres:yourpassword@postgres:5432/aitutor
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - postgres
-      - redis
-      - backend
+
 
   frontend:
     build:

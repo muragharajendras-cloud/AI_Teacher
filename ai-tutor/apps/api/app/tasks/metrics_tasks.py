@@ -1,4 +1,4 @@
-from app.tasks.celery_app import celery_app
+
 from app.core.database import SessionLocal
 from app.models import Session, TestResult, BehaviorIncident, StudentProfile
 from datetime import datetime, timedelta
@@ -31,7 +31,6 @@ def get_ai_recommendations(tests: list) -> list:
     except:
         return ["Review your weak topics carefully.", "Practice more descriptive questions.", "Maintain a consistent study schedule."]
 
-@celery_app.task
 def recompute_student_metrics(student_id: str):
     db = SessionLocal()
     try:

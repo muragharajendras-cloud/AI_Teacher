@@ -1,12 +1,10 @@
 import os
-from app.tasks.celery_app import celery_app
 from app.services.pdf_service import extract_text_smart, chunk_pages
 from app.core.vector_store import get_vectorstore
 from langchain.schema import Document
 from app.core.database import SessionLocal
 from app.models import Textbook
 
-@celery_app.task
 def index_textbook(pdf_path: str, student_id: str, subject: str, textbook_id: str):
     try:
         # 1. Extract text (with OCR fallback)
