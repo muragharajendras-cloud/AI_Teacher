@@ -20,7 +20,11 @@ async def submit_onboarding(payload: OnboardingPayload, current_user = Depends(g
     profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
     
     if not profile:
-        profile = StudentProfile(user_id=current_user.id)
+        # User metadata full_name is usually set by Supabase during registration
+        user_metadata = getattr(current_user, "user_metadata", {})
+        full_name = user_metadata.get("full_name", "Student")
+        
+        profile = StudentProfile(user_id=current_user.id, name=full_name)
         db.add(profile)
         
     profile.grade = payload.grade

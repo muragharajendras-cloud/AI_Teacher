@@ -25,11 +25,16 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Fetch cached metrics
     const fetchMetrics = async () => {
       try {
+        const { createClient } = await import('@/lib/supabase')
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/dashboard/metrics`, {
-          // Add auth headers if needed
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`
+          }
         })
         if (res.ok) {
           const data = await res.json()
