@@ -12,10 +12,8 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
 
-    REDIS_URL: str
-
     GROQ_API_KEY: str
-    RESEND_API_KEY: str
+    RESEND_API_KEY: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
