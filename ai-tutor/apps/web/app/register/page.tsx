@@ -17,19 +17,33 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     
-    // Mock Supabase registration and redirect
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const { createClient } = await import('@/lib/supabase')
+      const supabase = createClient()
       
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            role: role,
+          }
+        }
+      })
+
+      if (error) throw error
+
       if (role === 'student') {
         router.push('/onboarding')
       } else if (role === 'parent') {
-        router.push('/parent/settings') // Parent needs to link child
+        router.push('/parent/settings')
       } else {
         router.push('/admin/metrics')
       }
     } catch (err) {
       console.error(err)
+      alert("Registration error: " + (err as any).message)
     } finally {
       setLoading(false)
     }

@@ -17,22 +17,30 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     
-    // In a real app, you would call Supabase Auth here
-    // For demo purposes, we'll mock the smart redirect logic based on the email input
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const { createClient } = await import('@/lib/supabase')
+      const supabase = createClient()
       
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
       if (email.includes('parent')) {
         router.push('/parent/dashboard')
       } else if (email.includes('admin')) {
         router.push('/admin/metrics')
-      } else if (email.includes('new')) {
-        router.push('/onboarding')
-      } else {
-        router.push('/dashboard')
+      } else if (data?.user) {
+        if (email.includes('new')) {
+          router.push('/onboarding')
+        } else {
+          router.push('/dashboard')
+        }
       }
-    } catch (err) {
-      setError('Invalid credentials. Please try again.')
+    } catch (err: any) {
+      setError(err.message || 'Invalid credentials. Please try again.')
     } finally {
       setLoading(false)
     }

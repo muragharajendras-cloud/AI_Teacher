@@ -47,11 +47,18 @@ export default function OnboardingWizard() {
   const submitOnboarding = async (scorePct: number) => {
     setLoading(true)
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/onboarding`, {
+      const { createClient } = await import('@/lib/supabase')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/onboarding/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({
-          grade,
+          grade: parseInt(grade.toString() || "0"),
           board,
           subjects,
           diagnostic_score_pct: scorePct
@@ -60,6 +67,10 @@ export default function OnboardingWizard() {
       
       if (response.ok) {
         router.push('/dashboard')
+      } else {
+        const err = await response.text()
+        console.error("Onboarding failed:", err)
+        alert("Onboarding failed: " + err)
       }
     } catch (err) {
       console.error("Onboarding failed:", err)
